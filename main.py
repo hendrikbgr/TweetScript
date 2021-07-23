@@ -20,6 +20,7 @@ import undetected_chromedriver as uc
 from fake_headers import Headers
 from faker import Faker
 from selenium import webdriver
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import (InvalidSessionIdException,
                                         NoSuchElementException,
                                         WebDriverException)
@@ -31,7 +32,9 @@ from twocaptcha import TwoCaptcha
 import config
 import auth
 import proxy_config
+import keyword_config
 from plugin_config import background_js, manifest_json
+from selenium.webdriver.common.keys import Keys
 
 
 def clear():
@@ -41,7 +44,7 @@ def clear():
 
 clear()
 
-print("Getting chromedriver")
+print("Getting Chromedriver")
 print("Proxy: {}".format(config.use_proxy))
 OSNAME = platform.system()
 
@@ -156,14 +159,18 @@ while(is_site_loading):
 if site_loaded == 'success':
 
     # enter username
-    user = wait.until(EC.element_to_be_clickable(
+    username = wait.until(EC.element_to_be_clickable(
         (By.XPATH, '//*[@id="react-root"]/div/div/div[2]/main/div/div/div[2]/form/div/div[1]/label/div/div[2]/div/input')))
-    type_me(user, auth.username)
+    type_me(username, auth.username)
 
     # enter password
-    first = wait.until(EC.element_to_be_clickable(
+    password = wait.until(EC.element_to_be_clickable(
         (By.XPATH, '/html/body/div/div/div/div[2]/main/div/div/div[2]/form/div/div[2]/label/div/div[2]/div/input')))
-    type_me(first, auth.password)
+    type_me(password, auth.password)
+
+    # close pop up
+    wait.until(EC.element_to_be_clickable(
+        (By.XPATH, '/html/body/div/div/div/div[1]/div/div/div/div/div/div[2]'))).click()
 
     # click login
     wait.until(EC.element_to_be_clickable(
@@ -176,6 +183,63 @@ if site_loaded == 'success':
         print("Login Sucess | Username: {}".format(auth.username))
     except (NoSuchElementException, WebDriverException, InvalidSessionIdException) as e:
         print("Login Failed | Username: {}".format(auth.username))
+
+    if config.like_from_keywords == "true":
+        # Calc likes per keyword
+        likes_per_keyword = config.max_likes_from_keywords / len(keyword_config.keywords)
+        likes_per_keyword = round(likes_per_keyword)
+
+        for keyword in keyword_config.keywords:
+            keyword = keyword + ' lang:en'
+            search = wait.until(EC.element_to_be_clickable(
+                (By.XPATH, '//*[@id="react-root"]/div/div/div[2]/main/div/div/div/div[2]/div/div[2]/div/div/div/div[1]/div/div/div/form/div[1]/div/label/div[2]/div/input')))
+            type_me(search, keyword)
+
+            driver.find_element_by_xpath('//*[@id="react-root"]/div/div/div[2]/main/div/div/div/div[2]/div/div[2]/div/div/div/div[1]/div/div/div/form/div[1]/div/label/div[2]/div/input').send_keys(Keys.RETURN)
+
+            wait.until(EC.element_to_be_clickable(
+                (By.XPATH, '/html/body/div/div/div/div[2]/main/div/div/div/div[1]/div/div[1]/div[2]/nav/div/div[2]/div/div[2]/a'))).click()
+            
+            sleep(5)
+
+            liked = 0
+            liked_counter = 1
+            while likes_per_keyword > liked:
+                try:
+                    element = driver.find_element_by_xpath('/html/body/div/div/div/div[2]/main/div/div/div/div[1]/div/div[2]/div/div/section/div/div/div[{}]/div/div/article/div/div/div/div[2]/div[2]/div[2]/div[3]/div[3]/div'.format(liked_counter))
+
+                    actions = ActionChains(driver)
+                    actions.move_to_element(element).perform()
+                    like_status = driver.find_element_by_xpath('/html/body/div/div/div/div[2]/main/div/div/div/div[1]/div/div[2]/div/div/section/div/div/div[{}]/div/div/article/div/div/div/div[2]/div[2]/div[2]/div[3]/div[3]/div'.format(liked_counter)).get_attribute("data-testid")
+                except (NoSuchElementException, WebDriverException, InvalidSessionIdException) as e:
+                    element = driver.find_element_by_xpath('/html/body/div/div/div/div[2]/main/div/div/div/div[1]/div/div[2]/div/div/section/div/div/div[{}]/div/div/article/div/div/div/div[2]/div[2]/div[2]/div[4]/div[3]/div'.format(liked_counter))
+
+                    actions = ActionChains(driver)
+                    actions.move_to_element(element).perform()
+                    like_status = driver.find_element_by_xpath('/html/body/div/div/div/div[2]/main/div/div/div/div[1]/div/div[2]/div/div/section/div/div/div[{}]/div/div/article/div/div/div/div[2]/div[2]/div[2]/div[4]/div[3]/div'.format(liked_counter)).get_attribute("data-testid")
+                if like_status == "like":
+                    user = driver.find_element_by_xpath('/html/body/div/div/div/div[2]/main/div/div/div/div/div/div[2]/div/div/section/div/div/div[{}]/div/div/article/div/div/div/div[2]/div[2]/div[1]/div/div/div[1]/div[1]/a/div/div[2]/div/span'.format(liked_counter)).text
+                    try:
+                        driver.find_element_by_xpath('/html/body/div/div/div/div[2]/main/div/div/div/div[1]/div/div[2]/div/div/section/div/div/div[{}]/div/div/article/div/div/div/div[2]/div[2]/div[2]/div[3]/div[3]/div'.format(liked_counter)).click()
+                    except (NoSuchElementException, WebDriverException, InvalidSessionIdException) as e:
+                        driver.find_element_by_xpath('/html/body/div/div/div/div[2]/main/div/div/div/div[1]/div/div[2]/div/div/section/div/div/div[{}]/div/div/article/div/div/div/div[2]/div[2]/div[2]/div[4]/div[3]/div'.format(liked_counter)).click()
+                    liked_counter += 1
+                    liked += 1
+                    print()
+                    print('Liked Tweet by: {}'.format(user))
+                    print('Liked Tweet(s): {}'.format(liked))
+                    sleep(8)
+                else:
+                    liked_counter += 1
+                    pass
+            
+            wait.until(EC.element_to_be_clickable(
+                (By.XPATH, '/html/body/div/div/div/div[2]/main/div/div/div/div/div/div[1]/div[1]/div/div/div/div/div[1]/div'))).click()
+
+            
+
+    else:
+        pass
 
     sleep(10)
     driver.close()
