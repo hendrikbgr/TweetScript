@@ -121,6 +121,8 @@ options.add_experimental_option('prefs', {
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 options.add_argument("--disable-web-security")
+options.add_argument('--headless')
+options.add_argument('--disable-gpu')
 viewport = ['1920,1080']
 options.add_argument(f"--window-size={choice(viewport)}")
 options.add_argument("--log-level=3")
@@ -147,7 +149,7 @@ while(is_site_loading):
         driver.get(url)
         driver.execute_script(
             "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-        sleep(5)
+        sleep(1)
         loading_yes = driver.find_element_by_xpath(
             '/html/body/div/div/div/div[2]/main/div/div/div[1]/h1/span')
         is_site_loading = False
@@ -192,13 +194,13 @@ if site_loaded == 'success':
         for keyword in keyword_config.keywords:
             keyword = keyword + ' lang:en'
             search = wait.until(EC.element_to_be_clickable(
-                (By.XPATH, '//*[@id="react-root"]/div/div/div[2]/main/div/div/div/div[2]/div/div[2]/div/div/div/div[1]/div/div/div/form/div[1]/div/label/div[2]/div/input')))
+                (By.XPATH, '//*[@id="react-root"]/div/div/div[2]/main/div/div/div/div[2]/div/div[2]/div/div/div/div[1]/div/div/div/form/div[1]/div/div/label/div[2]/div/input')))
             type_me(search, keyword)
 
-            driver.find_element_by_xpath('//*[@id="react-root"]/div/div/div[2]/main/div/div/div/div[2]/div/div[2]/div/div/div/div[1]/div/div/div/form/div[1]/div/label/div[2]/div/input').send_keys(Keys.RETURN)
+            driver.find_element_by_xpath('/html/body/div/div/div/div[2]/main/div/div/div/div[2]/div/div[2]/div/div/div/div[1]/div/div/div/form/div[1]/div/div/label/div[2]/div/input').send_keys(Keys.RETURN)
 
             wait.until(EC.element_to_be_clickable(
-                (By.XPATH, '/html/body/div/div/div/div[2]/main/div/div/div/div[1]/div/div[1]/div[2]/nav/div/div[2]/div/div[2]/a'))).click()
+                (By.XPATH, '//*[@id="react-root"]/div/div/div[2]/main/div/div/div/div[1]/div/div[1]/div[2]/nav/div/div[2]/div/div[2]/a'))).click()
             
             sleep(5)
 
@@ -206,31 +208,36 @@ if site_loaded == 'success':
             liked_counter = 1
             while likes_per_keyword > liked:
                 try:
-                    element = driver.find_element_by_xpath('/html/body/div/div/div/div[2]/main/div/div/div/div[1]/div/div[2]/div/div/section/div/div/div[{}]/div/div/article/div/div/div/div[2]/div[2]/div[2]/div[3]/div[3]/div'.format(liked_counter))
-
-                    actions = ActionChains(driver)
-                    actions.move_to_element(element).perform()
-                    like_status = driver.find_element_by_xpath('/html/body/div/div/div/div[2]/main/div/div/div/div[1]/div/div[2]/div/div/section/div/div/div[{}]/div/div/article/div/div/div/div[2]/div[2]/div[2]/div[3]/div[3]/div'.format(liked_counter)).get_attribute("data-testid")
-                except (NoSuchElementException, WebDriverException, InvalidSessionIdException) as e:
-                    element = driver.find_element_by_xpath('/html/body/div/div/div/div[2]/main/div/div/div/div[1]/div/div[2]/div/div/section/div/div/div[{}]/div/div/article/div/div/div/div[2]/div[2]/div[2]/div[4]/div[3]/div'.format(liked_counter))
-
-                    actions = ActionChains(driver)
-                    actions.move_to_element(element).perform()
-                    like_status = driver.find_element_by_xpath('/html/body/div/div/div/div[2]/main/div/div/div/div[1]/div/div[2]/div/div/section/div/div/div[{}]/div/div/article/div/div/div/div[2]/div[2]/div[2]/div[4]/div[3]/div'.format(liked_counter)).get_attribute("data-testid")
-                if like_status == "like":
-                    user = driver.find_element_by_xpath('/html/body/div/div/div/div[2]/main/div/div/div/div/div/div[2]/div/div/section/div/div/div[{}]/div/div/article/div/div/div/div[2]/div[2]/div[1]/div/div/div[1]/div[1]/a/div/div[2]/div/span'.format(liked_counter)).text
                     try:
-                        driver.find_element_by_xpath('/html/body/div/div/div/div[2]/main/div/div/div/div[1]/div/div[2]/div/div/section/div/div/div[{}]/div/div/article/div/div/div/div[2]/div[2]/div[2]/div[3]/div[3]/div'.format(liked_counter)).click()
+                        element = driver.find_element_by_xpath('/html/body/div/div/div/div[2]/main/div/div/div/div[1]/div/div[2]/div/div/section/div/div/div[{}]/div/div/article/div/div/div/div[2]/div[2]/div[2]/div[4]/div/div[3]/div'.format(liked_counter))
+
+                        actions = ActionChains(driver)
+                        actions.move_to_element(element).perform()
+                        like_status = driver.find_element_by_xpath('/html/body/div/div/div/div[2]/main/div/div/div/div[1]/div/div[2]/div/div/section/div/div/div[{}]/div/div/article/div/div/div/div[2]/div[2]/div[2]/div[4]/div/div[3]/div'.format(liked_counter)).get_attribute("data-testid")
                     except (NoSuchElementException, WebDriverException, InvalidSessionIdException) as e:
-                        driver.find_element_by_xpath('/html/body/div/div/div/div[2]/main/div/div/div/div[1]/div/div[2]/div/div/section/div/div/div[{}]/div/div/article/div/div/div/div[2]/div[2]/div[2]/div[4]/div[3]/div'.format(liked_counter)).click()
-                    liked_counter += 1
-                    liked += 1
-                    print()
-                    print('Liked Tweet by: {}'.format(user))
-                    print('Liked Tweet(s): {}'.format(liked))
-                    sleep(8)
-                else:
-                    liked_counter += 1
+                        element = driver.find_element_by_xpath('/html/body/div/div/div/div[2]/main/div/div/div/div[1]/div/div[2]/div/div/section/div/div/div[{}]/div/div/article/div/div/div/div[2]/div[2]/div[2]/div[3]/div/div[3]/div'.format(liked_counter))
+                        
+                        actions = ActionChains(driver)
+                        actions.move_to_element(element).perform()
+                        like_status = driver.find_element_by_xpath('/html/body/div/div/div/div[2]/main/div/div/div/div[1]/div/div[2]/div/div/section/div/div/div[{}]/div/div/article/div/div/div/div[2]/div[2]/div[2]/div[3]/div/div[3]/div'.format(liked_counter)).get_attribute("data-testid")
+                    if like_status == "like":
+                        user = driver.find_element_by_xpath('/html/body/div/div/div/div[2]/main/div/div/div/div/div/div[2]/div/div/section/div/div/div[{}]/div/div/article/div/div/div/div[2]/div[2]/div[1]/div/div/div[1]/div[1]/a/div/div[2]/div/span'.format(liked_counter)).text
+                        try:
+                            driver.find_element_by_xpath('/html/body/div/div/div/div[2]/main/div/div/div/div[1]/div/div[2]/div/div/section/div/div/div[{}]/div/div/article/div/div/div/div[2]/div[2]/div[2]/div[3]/div/div[3]/div'.format(liked_counter)).click()
+                        except (NoSuchElementException, WebDriverException, InvalidSessionIdException) as e:
+                            driver.find_element_by_xpath('/html/body/div/div/div/div[2]/main/div/div/div/div[1]/div/div[2]/div/div/section/div/div/div[{}]/div/div/article/div/div/div/div[2]/div[2]/div[2]/div[4]/div/div[3]/div'.format(liked_counter)).click()
+                        liked_counter += 1
+                        liked += 1
+                        print()
+                        print('Liked Tweet by: {}'.format(user))
+                        print('Liked Tweet(s): {}'.format(liked))
+                        sleep(8)
+                    else:
+                        liked_counter += 1
+                        pass
+                except (NoSuchElementException, WebDriverException, InvalidSessionIdException) as e:
+                    print("Unknown Error! Moving to next Keyword")
+                    liked = likes_per_keyword + 1
                     pass
             
             wait.until(EC.element_to_be_clickable(

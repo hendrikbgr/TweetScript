@@ -12,4 +12,4 @@ like_from_keywords = 'true'
 # and you have 5 keywords each
 # keyword will get 2 likes
 
-max_likes_from_keywords = 10
+max_likes_from_keywords = 100
